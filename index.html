@@ -6,7 +6,21 @@
   <link rel="stylesheet" href="./css/bootstrap.css">
   <script src="./lib/jquery-1.12.2.js"></script>
   <script src="./lib/template-web.js"></script>
-  <script src="./js/index.js"></script>
+  <script id="heroListTemplate" type="text/html">
+      {{each data}}
+        <tr>
+          <td>{{$value.id}}</td>
+          <td>{{$value.name}}</td>
+          <td>{{$value.gender}}</td>
+          <td><img style="width: 50px;height: 50px" src="{{$value.img}}"></td>
+          <td>
+            <a href="./edit.html?id={{$value.id}}">修改</a>
+            <a onclick="deleteHero({{$value.id}})" href="javascript:;">删除</a>
+          </td>
+        </tr>
+      {{/each}}
+  </script>
+
 </head>
 
 <body>
@@ -28,30 +42,32 @@
         </tr>
       </thead>
       <tbody id="tbody">
-        <tr>
-          <td>1</td>
-          <td>兰陵王</td>
-          <td>男</td>
-          <td><img src="./images/logo.png"></td>
-          <td>
-            <a href="#">修改</a>
-            <a href="javascript:;">删除</a>
-          </td>
-        </tr>
-        <tr>
-          <td>2</td>
-          <td>虞姬</td>
-          <td>女</td>
-          <td><img src="./images/logo.png"></td>
-          <td>
-            <a href="#">修改</a>
-            <a href="javascript:;">删除</a>
-          </td>
-        </tr>
+
       </tbody>
     </table>
   </div>
 
 </body>
+<script>
+    function getHeroList() {
+      // 获取王者荣耀数据
+      $.get('http://localhost:3001/getHeroList', (res) => {
+        if (res.code === 200) {
+          // art-template循环数据
+          const renderResult = template('heroListTemplate', res)
+          $('#tbody').html(renderResult)
+        }
+      })
+    }
+    function deleteHero(id) {
+      $.get('http://localhost:3001/delHeroById', { id }, (res) => {
+        if (res.code === 200) {
+          alert('删除成功')
+          getHeroList();
+        }
+      })
+    }
 
+    getHeroList();
+</script>
 </html>

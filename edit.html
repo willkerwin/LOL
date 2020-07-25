@@ -16,37 +16,95 @@
     </header>
     <div class="container hero-list">
         <form id='myform'>
-            <table class="table table-hover">
-                <tbody>
-                    <tr>
-                        <td>姓名：</td>
-                        <td><input type="text" name="name"></td>
-                    </tr>
-                    <tr>
-                        <td>性别：</td>
-                        <td>
-                            <input id="man" name="gender" value="男" type="radio" checked>
-                            <label for="man">男</label>
-                            <input name="gender" value="女" type="radio" id="female ">
-                            <label for="female ">女</label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>头像：</td>
-                        <td>
-                            <img src="/images/default.png" alt="" id="photo" width="100"
-                                style='border: 1px solid #ccc;margin-bottom: 5px;'>
-                            <input type="file" id="img">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td><input type="button" id="sub" value="新增"></td>
-                    </tr>
-                </tbody>
-            </table>
+
         </form>
     </div>
 </body>
+<script id="heroTemplate" type="text/html">
+    <table class="table table-hover">
+        <input hidden name="img" id="uploadImage" value="{{img}}"/>
+        <input hidden name="id" value="{{id}}"/>
+        <tbody>
+            <tr>
+                <td>姓名：</td>
+                <td><input type="text" name="name" value="{{name}}"></td>
+            </tr>
+            <tr>
+                <td>性别：</td>
+                <td>
+                    <input id="man" {{ gender === "男" ? "checked" : ""}} name="gender" value="男" type="radio">
+                    <label for="man">男</label>
+                    <input name="gender" {{ gender === "女" ? "checked" : ""}} value="女" type="radio" id="female ">
+                    <label for="female ">女</label>
+                </td>
+            </tr>
+            <tr>
+                <td>头像：</td>
+                <td>
+                    <img src="{{img || '/images/default.png'}}" alt="" id="displayImage" width="100"
+                        style='border: 1px solid #ccc;margin-bottom: 5px;'>
+                    <input onchange="uploadImg()" type="file" id="imageInput">
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><input onclick="updateHero()" type="button" id="sub" value="保存"></td>
+            </tr>
+        </tbody>
+    </table>
+</script>
+<script>
+    // 根据英雄id获取数据
+    function getHeroById() {
+        const id = getQueryParam('id');
+        $.get('http://127.0.0.1:3001/getHeroById', { id }, (res) => {
+            const renderResult = template('heroTemplate', res.data)
+            console.log('renderResult')
+            $('#myform').html(renderResult)
+        })
+    }
+    
+    function getQueryParam(name) {
+        const url = window.location.href;
+        const paramStr = url.split('?')[1];
+        const paramArr = paramStr.split('&');
+        let result = '';
+        paramArr.find(item => {
+            const param = item.split('=');
+            if(param[0] === name) {
+                result = param[1];
+            }
+        })
+        return result;
+    }
 
+    function updateHero() {
+        // 表单序列化
+        const params = $('#myform').serialize()
+        $.post('http://localhost:3001/updateHero', params, (res) => {
+            console.log(res)
+        })
+    }
+
+    function uploadImg() {
+            const formData = new FormData();
+            // 获取图片二进制
+            const file = $('#imageInput')[0].files[0];
+            formData.append('avatar', file);
+            $.ajax({
+                type: 'post',
+                url: 'http://localhost:3001/uploadFile',
+                data: formData,
+                contentType: false, // 禁止进行编码
+                processData: false, // 禁止对数据进行处理，因为我们的是二进制数据
+                success: function(res) {
+                    const jRes = JSON.parse(res)
+                    $("#displayImage").attr('src', 'http://localhost:3001/' + jRes.src);
+                    $('#uploadImage').val('http://localhost:3001/' + jRes.src)
+                }
+            })
+        }
+
+    getHeroById();
+</script>
 </html>
